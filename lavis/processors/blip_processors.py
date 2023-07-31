@@ -13,6 +13,7 @@ from lavis.processors.randaugment import RandomAugment
 from omegaconf import OmegaConf
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
+import torch
 
 
 class BlipImageBaseProcessor(BaseProcessor):
@@ -140,6 +141,115 @@ class BlipImageTrainProcessor(BlipImageBaseProcessor):
 
     def __call__(self, item):
         return self.transform(item)
+
+    @classmethod
+    def from_config(cls, cfg=None):
+        if cfg is None:
+            cfg = OmegaConf.create()
+
+        image_size = cfg.get("image_size", 384)
+
+        mean = cfg.get("mean", None)
+        std = cfg.get("std", None)
+
+        min_scale = cfg.get("min_scale", 0.5)
+        max_scale = cfg.get("max_scale", 1.0)
+
+        return cls(
+            image_size=image_size,
+            mean=mean,
+            std=std,
+            min_scale=min_scale,
+            max_scale=max_scale,
+        )
+@registry.register_processor("blip_image_eval_gram")
+class BlipImageEval_Gram_Processor(BlipImageBaseProcessor):
+    def __init__(
+        self,
+        image_size=384, mean=None, std=None):
+
+        crop_size=image_size
+        resize_size=256
+        interpolation=InterpolationMode.BILINEAR
+        mean=(0.485, 0.456, 0.406)
+        std=(0.229, 0.224, 0.225)
+
+        self.transforms_color = transforms.Compose(
+            [
+                transforms.Resize(resize_size, interpolation=interpolation),
+                transforms.CenterCrop(crop_size),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+#                transforms.Normalize(mean=mean, std=std),
+            ]
+        )
+
+        self.transforms_gray = transforms.Compose(
+            [
+                transforms.Resize(resize_size, interpolation=interpolation),
+                transforms.CenterCrop(crop_size),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+                transforms.Normalize(mean=mean, std=std),
+                transforms.Grayscale(num_output_channels=3),
+            ]
+        )
+
+
+    def __call__(self, item):
+        img_color=self.transforms_color(item)
+        img_gray=self.transforms_gray(item)
+        return torch.cat((img_color,img_gray),axis=0)
+
+    @classmethod
+    def from_config(cls, cfg=None):
+        if cfg is None:
+            cfg = OmegaConf.create()
+
+        image_size = cfg.get("image_size", 384)
+
+        mean = cfg.get("mean", None)
+        std = cfg.get("std", None)
+
+        return cls(image_size=image_size, mean=mean, std=std)
+
+
+@registry.register_processor("blip2_image_train_gram")
+class Blip2ImageTrain_Gram_Processor(BlipImageBaseProcessor):
+    def __init__(
+        self,
+        image_size=384, mean=None, std=None, min_scale=0.5, max_scale=1.0):
+        
+        crop_size=image_size
+        resize_size=256
+        interpolation=InterpolationMode.BILINEAR
+        mean=(0.485, 0.456, 0.406)
+        std=(0.229, 0.224, 0.225)
+        self.transforms_color = transforms.Compose(
+            [
+                transforms.Resize(resize_size, interpolation=interpolation),
+                transforms.CenterCrop(crop_size),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+#                transforms.Normalize(mean=mean, std=std), #this makes color meanig (only 0 to 1) #for base line
+            ]
+        )
+
+        self.transforms_gray = transforms.Compose(
+            [
+                transforms.Resize(resize_size, interpolation=interpolation),
+                transforms.CenterCrop(crop_size),
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float),
+                transforms.Normalize(mean=mean, std=std),
+                transforms.Grayscale(num_output_channels=3),
+            ]
+        )
+
+    def __call__(self, item):
+        img_color=self.transforms_color(item)
+        img_gray=self.transforms_gray(item)
+        return torch.cat((img_color,img_gray),axis=0)
 
     @classmethod
     def from_config(cls, cfg=None):

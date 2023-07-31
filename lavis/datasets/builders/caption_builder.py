@@ -12,6 +12,11 @@ from lavis.datasets.datasets.coco_caption_datasets import (
     NoCapsEvalDataset,
 )
 
+from lavis.datasets.datasets.artemis_caption_datasets import (
+    ArtemisCapDataset,
+    ArtemisCapEvalDataset,
+)
+
 from lavis.common.registry import registry
 from lavis.datasets.datasets.video_caption_datasets import (
     VideoCaptionDataset,
@@ -28,6 +33,15 @@ class COCOCapBuilder(BaseDatasetBuilder):
         "default": "configs/datasets/coco/defaults_cap.yaml",
     }
 
+
+@registry.register_builder("artemis_caption")
+class ArtemisCapBuilder(BaseDatasetBuilder):
+    train_dataset_cls = ArtemisCapDataset
+    eval_dataset_cls = ArtemisCapEvalDataset
+
+    DATASET_CONFIG_DICT = {
+        "default": "configs/datasets/artemis/defaults_cap.yaml",
+    }
 
 @registry.register_builder("nocaps")
 class COCOCapBuilder(BaseDatasetBuilder):

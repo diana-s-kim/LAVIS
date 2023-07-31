@@ -10,8 +10,20 @@ from lavis.common.registry import registry
 
 from lavis.datasets.builders.base_dataset_builder import BaseDatasetBuilder
 from lavis.datasets.datasets.image_text_pair_datasets import ImageTextPairDataset
+from lavis.datasets.datasets.image_text_pair_datasets import ImageTextPairDatasetArtEmis#added
 from lavis.datasets.datasets.laion_dataset import LaionDataset
 
+
+@registry.register_builder("artemis")
+class ArtEmisCaption3MBuilder(BaseDatasetBuilder):
+    train_dataset_cls = ImageTextPairDatasetArtEmis
+    DATASET_CONFIG_DICT = {
+        "default": "configs/datasets/artemis/defaults.yaml"
+    }
+    eval_dataset_cls = ImageTextPairDatasetArtEmis
+    DATASET_CONFIG_DICT = {
+        "default": "configs/datasets/artemis/defaults.yaml"
+    }
 
 @registry.register_builder("conceptual_caption_3m")
 class ConceptualCaption3MBuilder(BaseDatasetBuilder):
